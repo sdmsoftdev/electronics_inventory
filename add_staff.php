@@ -8,6 +8,8 @@ if (!hasPermission('admin')) {
     exit();
 }
 
+/* Test */
+
 $message = '';
 $message_type = '';
 
