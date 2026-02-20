@@ -12,14 +12,15 @@ $message = '';
 $message_type = '';
 
 // Generate Staff ID
-function generateStaffId() {
+function generateStaffId()
+{
     global $conn;
-    
+
     do {
         $staff_id = 'STF-' . date('Y') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
         $check = $conn->query("SELECT id FROM staff WHERE staff_id = '$staff_id'");
     } while ($check->num_rows > 0);
-    
+
     return $staff_id;
 }
 
@@ -36,7 +37,7 @@ if (isset($_POST['add_staff'])) {
     $floor = sanitize($_POST['floor']);
     $date_joined = !empty($_POST['date_joined']) ? sanitize($_POST['date_joined']) : date('Y-m-d');
     $notes = sanitize($_POST['notes']);
-    
+
     // Check if email already exists
     $check_email = $conn->query("SELECT id FROM staff WHERE email = '$email'");
     if ($check_email->num_rows > 0) {
@@ -45,11 +46,11 @@ if (isset($_POST['add_staff'])) {
     } else {
         $stmt = $conn->prepare("INSERT INTO staff (staff_id, full_name, email, phone, employee_id, position, department, section, floor, date_joined, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssssssssi", $staff_id, $full_name, $email, $phone, $employee_id, $position, $department, $section, $floor, $date_joined, $notes, $_SESSION['user_id']);
-        
+
         if ($stmt->execute()) {
             $new_staff_id = $conn->insert_id;
             logActivity($_SESSION['user_id'], 'CREATE', 'staff', $new_staff_id, "Added staff member: $full_name");
-            
+
             // Redirect with success
             header("Location: add_staff.php?success=1&staff_id=$staff_id&name=" . urlencode($full_name));
             exit();
@@ -98,7 +99,7 @@ if ($sections_query) {
     while ($row = $sections_query->fetch_assoc()) {
         $dept = $row['department_name'];
         $section = $row['section_name'];
-        
+
         if (!isset($department_sections[$dept])) {
             $department_sections[$dept] = [];
         }
@@ -108,6 +109,7 @@ if ($sections_query) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -120,10 +122,12 @@ if ($sections_query) {
             --secondary-color: #764ba2;
             --sidebar-width: 260px;
         }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
+
         .sidebar {
             position: fixed;
             top: 0;
@@ -135,57 +139,72 @@ if ($sections_query) {
             overflow-y: auto;
             z-index: 1000;
         }
+
         .sidebar-header {
             padding: 25px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .sidebar-menu a {
             display: flex;
             align-items: center;
             padding: 12px 25px;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
         }
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background: rgba(255,255,255,0.1);
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(255, 255, 255, 0.1);
             color: white;
             border-left: 4px solid white;
         }
+
         .sidebar-menu i {
             width: 25px;
             margin-right: 12px;
         }
+
         .main-content {
             margin-left: var(--sidebar-width);
         }
+
         .top-navbar {
             background: white;
             padding: 15px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
+
         .content-area {
             padding: 30px;
         }
+
         .card-custom {
             border: none;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             background: white;
         }
+
         .form-label {
             font-weight: 600;
             color: #555;
             margin-bottom: 8px;
         }
-        .form-control, .form-select {
+
+        .form-control,
+        .form-select {
             border-radius: 8px;
             border: 1px solid #ddd;
             padding: 10px 15px;
         }
-        .form-control:focus, .form-select:focus {
+
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
+
         .section-title {
             color: var(--primary-color);
             font-weight: 600;
@@ -193,6 +212,7 @@ if ($sections_query) {
             padding-bottom: 10px;
             border-bottom: 2px solid #e0e0e0;
         }
+
         .info-box {
             background: #f8f9fa;
             border-left: 4px solid var(--primary-color);
@@ -200,21 +220,25 @@ if ($sections_query) {
             border-radius: 8px;
             margin-bottom: 20px;
         }
+
         .password-strength {
             height: 5px;
             border-radius: 3px;
             margin-top: 5px;
             transition: all 0.3s;
         }
+
         .datalist-option {
             padding: 8px;
             cursor: pointer;
         }
+
         .datalist-option:hover {
             background: #f0f0f0;
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
@@ -254,21 +278,21 @@ if ($sections_query) {
 
         <div class="content-area">
             <?php if ($message): ?>
-            <div class="alert alert-<?php echo $message_type; ?> alert-dismissible fade show" role="alert">
-                <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
-                <?php echo $message; ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                <?php if ($message_type === 'success'): ?>
-                <div class="mt-3">
-                    <a href="add_staff.php" class="btn btn-sm btn-success me-2">
-                        <i class="fas fa-plus me-1"></i>Add Another Staff Member
-                    </a>
-                    <a href="staff.php" class="btn btn-sm btn-primary">
-                        <i class="fas fa-users me-1"></i>View Staff Directory
-                    </a>
+                <div class="alert alert-<?php echo $message_type; ?> alert-dismissible fade show" role="alert">
+                    <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+                    <?php echo $message; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <?php if ($message_type === 'success'): ?>
+                        <div class="mt-3">
+                            <a href="add_staff.php" class="btn btn-sm btn-success me-2">
+                                <i class="fas fa-plus me-1"></i>Add Another Staff Member
+                            </a>
+                            <a href="staff.php" class="btn btn-sm btn-primary">
+                                <i class="fas fa-users me-1"></i>View Staff Directory
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
-            </div>
             <?php endif; ?>
 
             <form method="POST" action="">
@@ -304,7 +328,7 @@ if ($sections_query) {
                                 </div>
                             </div>
                         </div>
-                       
+
                         <!-- Employment Details -->
                         <div class="card card-custom mb-4">
                             <div class="card-header bg-white py-3">
@@ -343,105 +367,105 @@ if ($sections_query) {
                                         </select>
                                         <small class="text-muted">Select from predefined departments</small>
                                     </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Section <span class="text-danger">*</span></label>
-                                        <select name="section" id="sectionSelect" class="form-select" required>
-                                            <option value="">Select Section</option>
-                                        </select>
-                                        <small class="text-muted">Section will populate based on department</small>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Floor <span class="text-danger">*</span></label>
-                                        <select name="floor" class="form-select" required>
-                                            <option value="">Select Floor</option>
-                                            <option value="Ground Floor">Ground Floor</option>
-                                            <option value="1st Floor">1st Floor</option>
-                                            <option value="2nd Floor">2nd Floor</option>
-                                            <option value="3rd Floor">3rd Floor</option>
-                                            <option value="4th Floor">4th Floor</option>
-                                            <option value="5th Floor">5th Floor</option>
-                                            <?php while ($floor = $floors->fetch_assoc()): ?>
-                                                <?php 
-                                                $floor_name = $floor['floor'];
-                                                // Only show if not in predefined list
-                                                if (!in_array($floor_name, $floor_options)): 
-                                                ?>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Section <span class="text-danger">*</span></label>
+                                    <select name="section" id="sectionSelect" class="form-select" required>
+                                        <option value="">Select Section</option>
+                                    </select>
+                                    <small class="text-muted">Section will populate based on department</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Floor <span class="text-danger">*</span></label>
+                                    <select name="floor" class="form-select" required>
+                                        <option value="">Select Floor</option>
+                                        <option value="Ground Floor">Ground Floor</option>
+                                        <option value="1st Floor">1st Floor</option>
+                                        <option value="2nd Floor">2nd Floor</option>
+                                        <option value="3rd Floor">3rd Floor</option>
+                                        <option value="4th Floor">4th Floor</option>
+                                        <option value="5th Floor">5th Floor</option>
+                                        <?php while ($floor = $floors->fetch_assoc()): ?>
+                                            <?php
+                                            $floor_name = $floor['floor'];
+                                            // Only show if not in predefined list
+                                            if (!in_array($floor_name, $floor_options)):
+                                            ?>
                                                 <option value="<?php echo htmlspecialchars($floor_name); ?>">
                                                     <?php echo htmlspecialchars($floor_name); ?>
                                                 </option>
-                                                <?php endif; ?>
-                                            <?php endwhile; ?>
-                                        </select>
-                                        <small class="text-muted">Select staff member's floor location</small>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Additional Notes</label>
-                                        <textarea name="notes" class="form-control" rows="3" placeholder="Any additional information about this staff member..."></textarea>
-                                    </div>
+                                            <?php endif; ?>
+                                        <?php endwhile; ?>
+                                    </select>
+                                    <small class="text-muted">Select staff member's floor location</small>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Action Sidebar -->
-                    <div class="col-lg-4">
-                        <div class="card card-custom sticky-top" style="top: 20px;">
-                            <div class="card-header bg-white py-3">
-                                <h6 class="mb-0"><i class="fas fa-save me-2"></i>Save Staff Member</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="info-box mb-3">
-                                    <h6><i class="fas fa-info-circle me-2"></i>Important</h6>
-                                    <ul class="small mb-0 ps-3">
-                                        <li>All fields marked with <span class="text-danger">*</span> are required</li>
-                                        <li>Staff ID will be auto-generated (STF-YYYY-###)</li>
-                                        <li>Email must be unique</li>
-                                        <li>Staff members are stored separately from system users</li>
-                                        <li>Staff can be assigned assets after creation</li>
-                                    </ul>
-                                </div>
-                                
-                                <button type="submit" name="add_staff" class="btn btn-primary w-100 mb-2">
-                                    <i class="fas fa-user-plus me-2"></i>Add Staff Member
-                                </button>
-                                <a href="staff.php" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-times me-2"></i>Cancel
-                                </a>
-
-                                <hr class="my-3">
-                                
-                                <div class="small text-muted">
-                                    <p class="mb-2"><i class="fas fa-user me-1"></i> <strong>Adding as:</strong><br><?php echo htmlspecialchars($_SESSION['full_name']); ?></p>
-                                    <p class="mb-0"><i class="fas fa-calendar me-1"></i> <strong>Date:</strong><br><?php echo date('d M Y, h:i A'); ?></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Role Descriptions -->
-                        <div class="card card-custom mt-3">
-                            <div class="card-header bg-white py-3">
-                                <h6 class="mb-0"><i class="fas fa-users me-2"></i>Staff vs Users</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <span class="badge bg-primary mb-2">Staff Members</span>
-                                    <p class="small mb-0">Company employees who receive asset assignments. No system login access.</p>
-                                </div>
-                                <div>
-                                    <span class="badge bg-secondary mb-2">System Users</span>
-                                    <p class="small mb-0">Admin/Staff with system login credentials for managing inventory. See User Management page.</p>
+                                <div class="col-12">
+                                    <label class="form-label">Additional Notes</label>
+                                    <textarea name="notes" class="form-control" rows="3" placeholder="Any additional information about this staff member..."></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </form>
+
+                <!-- Action Sidebar -->
+                <div class="col-lg-4">
+                    <div class="card card-custom sticky-top" style="top: 20px;">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0"><i class="fas fa-save me-2"></i>Save Staff Member</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-box mb-3">
+                                <h6><i class="fas fa-info-circle me-2"></i>Important</h6>
+                                <ul class="small mb-0 ps-3">
+                                    <li>All fields marked with <span class="text-danger">*</span> are required</li>
+                                    <li>Staff ID will be auto-generated (STF-YYYY-###)</li>
+                                    <li>Email must be unique</li>
+                                    <li>Staff members are stored separately from system users</li>
+                                    <li>Staff can be assigned assets after creation</li>
+                                </ul>
+                            </div>
+
+                            <button type="submit" name="add_staff" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-user-plus me-2"></i>Add Staff Member
+                            </button>
+                            <a href="staff.php" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+
+                            <hr class="my-3">
+
+                            <div class="small text-muted">
+                                <p class="mb-2"><i class="fas fa-user me-1"></i> <strong>Adding as:</strong><br><?php echo htmlspecialchars($_SESSION['full_name']); ?></p>
+                                <p class="mb-0"><i class="fas fa-calendar me-1"></i> <strong>Date:</strong><br><?php echo date('d M Y, h:i A'); ?></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Descriptions -->
+                    <div class="card card-custom mt-3">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0"><i class="fas fa-users me-2"></i>Staff vs Users</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <span class="badge bg-primary mb-2">Staff Members</span>
+                                <p class="small mb-0">Company employees who receive asset assignments. No system login access.</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary mb-2">System Users</span>
+                                <p class="small mb-0">Admin/Staff with system login credentials for managing inventory. See User Management page.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
         </div>
+        </form>
+    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-     <script>
+    <script>
         // Department to Sections mapping
         const departmentSections = <?php echo json_encode($department_sections); ?>;
 
@@ -450,10 +474,10 @@ if ($sections_query) {
 
         departmentSelect.addEventListener('change', function() {
             const selectedDept = this.value;
-            
+
             // Clear section select
             sectionSelect.innerHTML = '<option value="">Select Section</option>';
-            
+
             if (selectedDept && departmentSections[selectedDept]) {
                 // Populate sections
                 departmentSections[selectedDept].forEach(section => {
@@ -462,7 +486,7 @@ if ($sections_query) {
                     option.textContent = section;
                     sectionSelect.appendChild(option);
                 });
-                
+
                 // Enable section select
                 sectionSelect.disabled = false;
                 sectionSelect.classList.remove('section-disabled');
@@ -475,4 +499,5 @@ if ($sections_query) {
     </script>
 
 </body>
+
 </html>
